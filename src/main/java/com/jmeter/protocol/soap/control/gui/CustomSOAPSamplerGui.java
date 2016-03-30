@@ -499,6 +499,7 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
         super.configure(el);
         CustomSOAPSampler sampler = (CustomSOAPSampler)el;
         this.urlField.switchDocument(this, sampler, sampler.getURLData());
+        this.firstWithSoapProtocolVersion.setSelectedItem(sampler.getSoapProtocolVersion());
         this.soapXml.switchDocument(this, sampler, sampler.getXmlData());
         this.soapTableModel.clear();
         this.soapTableModel.replace(sampler.getAttachments());
