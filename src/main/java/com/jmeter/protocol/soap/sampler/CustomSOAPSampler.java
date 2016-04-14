@@ -92,6 +92,10 @@ public class CustomSOAPSampler extends AbstractSampler {
         return this.getPropertyAsString("SOAPAttachmentAsResponseCID");
     }
 
+    AttachmentDefinition getAttachmentDefinition() {
+        return new AttachmentDefinition();
+    }
+
     public void setAttachments(ArrayList attachments) {
         this.setProperty("SOAPAttachmentCount", "" + attachments.size());
 
