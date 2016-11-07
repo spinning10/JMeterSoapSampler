@@ -7,13 +7,10 @@ import com.jmeter.sampler.util.StringDataSource;
 import com.jmeter.protocol.soap.control.gui.AttachmentDefinition;
 
 import java.awt.Component;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -325,10 +322,15 @@ public class CustomSOAPSampler extends AbstractSampler {
                 while(attIt.hasNext()) {
                     AttachmentPart ap = (AttachmentPart)attIt.next();
                     result.addAttachment(ap);
+
+                    int attSize = ap.getSize();
+                    //DataHandler dh = ap.getDataHandler();
+                    //InputStream is = (InputStream) ap.getContent();
+                    //copyInputStreamToFile(is, new File("c:/Users/userX/temp/" + ap.getContentId().replace(">", "").replace("<", "")));
                     String attachmentContentType = ap.getContentType();
                     String textRepresentation = null;
                     if(!attachmentContentType.startsWith("text/") && !attachmentContentType.endsWith("/xml")) {
-                        textRepresentation = "(binary data)";
+                        textRepresentation = "(binary data, size in bytes: " + attSize + ")";
                     } else {
                         textRepresentation = SOAPUtils.attachmentToString(ap);
                     }
@@ -401,6 +403,21 @@ public class CustomSOAPSampler extends AbstractSampler {
             result.setSuccessful(false);
             log.error("Exception in SOAP communication", var41);
             return result;
+        }
+    }
+
+    private void copyInputStreamToFile( InputStream in, File file ) {
+        try {
+            OutputStream out = new FileOutputStream(file);
+            byte[] buf = new byte[1024];
+            int len;
+            while((len=in.read(buf))>0){
+                out.write(buf,0,len);
+            }
+            out.close();
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
