@@ -332,9 +332,12 @@ public class CustomSOAPSampler extends AbstractSampler {
                     //copyInputStreamToFile(is, new File("c:/Users/userX/temp/" + ap.getContentId().replace(">", "").replace("<", "")));
                     String attachmentContentType = ap.getContentType();
                     String textRepresentation = null;
+                    boolean isBinary;
                     if(!attachmentContentType.startsWith("text/") && !attachmentContentType.endsWith("/xml")) {
+                        isBinary = true;
                         textRepresentation = "(binary data, size in bytes: " + attSize + ")";
                     } else {
+                        isBinary = false;
                         textRepresentation = SOAPUtils.attachmentToString(ap);
                     }
 
@@ -343,8 +346,13 @@ public class CustomSOAPSampler extends AbstractSampler {
                     subResult.setResponseCodeOK();
                     subResult.setResponseMessageOK();
                     subResult.setSampleLabel(ap.getContentId() + " (" + ap.getContentType() + ")");
-                    subResult.setResponseData(textRepresentation.getBytes());
-                    subResult.setDataType("text");
+                    if (isBinary) {
+                        subResult.setResponseData(ap.getRawContentBytes());
+                        subResult.setDataType(SampleResult.BINARY);
+                    } else {
+                        subResult.setResponseData(textRepresentation);
+                        subResult.setDataType(SampleResult.TEXT);
+                    }
                     subResult.setSuccessful(true);
                     responseHeaders = SOAPUtils.headersToString(ap.getAllMimeHeaders());
                     subResult.setResponseHeaders(responseHeaders);
