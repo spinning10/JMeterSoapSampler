@@ -284,6 +284,9 @@ public class CustomSOAPSampler extends AbstractSampler {
                 StreamResult strResult = new StreamResult(sw1);
                 transformer1.transform(sourceContent1, strResult);
                 result.setSOAPEnvelope(sw1.toString());
+                String responseHeaders = SOAPUtils.headersToString(respSoapPart2.getAllMimeHeaders());
+                result.setResponseHeaders(responseHeaders);
+                result.setHeadersSize(responseHeaders.length());
                 SOAPBody respBody = response2.getSOAPBody();
                 if(respBody.hasFault()) {
                     SOAPFault attachmentFound1 = respBody.getFault();
@@ -343,6 +346,9 @@ public class CustomSOAPSampler extends AbstractSampler {
                     subResult.setResponseData(textRepresentation.getBytes());
                     subResult.setDataType("text");
                     subResult.setSuccessful(true);
+                    responseHeaders = SOAPUtils.headersToString(ap.getAllMimeHeaders());
+                    subResult.setResponseHeaders(responseHeaders);
+                    subResult.setHeadersSize(responseHeaders.length());
                     ((SampleResult)rootResult).addSubResult(subResult);
                     if(!attachmentFound) {
                         boolean attachmentMatched = false;

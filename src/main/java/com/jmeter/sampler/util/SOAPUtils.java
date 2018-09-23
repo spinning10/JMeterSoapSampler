@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Iterator;
 import javax.activation.DataHandler;
 import javax.xml.soap.AttachmentPart;
+import javax.xml.soap.MimeHeader;
 import javax.xml.soap.SOAPException;
 import javax.xml.transform.stream.StreamSource;
 
@@ -56,6 +58,18 @@ public class SOAPUtils {
         }
 
         br.close();
+        return sb.toString();
+    }
+
+    public static String headersToString(Iterator it) throws SOAPException, IOException {
+        StringBuffer sb = new StringBuffer();
+        while (it.hasNext()) {
+            MimeHeader header = (MimeHeader)it.next();
+            sb.append(header.getName());
+            sb.append(": ");
+            sb.append(header.getValue());
+            sb.append("\n");
+        }
         return sb.toString();
     }
 }
