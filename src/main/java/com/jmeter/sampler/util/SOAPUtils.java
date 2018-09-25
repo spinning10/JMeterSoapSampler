@@ -31,6 +31,8 @@ public class SOAPUtils {
             if(r == null && is != null) {
                 r = new InputStreamReader(is);
             }
+        } else {
+            attachmentData.append(attachmentContent);
         }
 
         if(r != null) {
