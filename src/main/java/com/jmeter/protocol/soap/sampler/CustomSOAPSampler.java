@@ -26,10 +26,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.jmeter.engine.util.CompoundVariable;
+import org.apache.jmeter.protocol.http.control.AuthManager;
+import org.apache.jmeter.protocol.http.control.CookieManager;
+import org.apache.jmeter.protocol.http.control.Header;
+import org.apache.jmeter.protocol.http.control.HeaderManager;
 import org.apache.jmeter.samplers.AbstractSampler;
 import org.apache.jmeter.samplers.Entry;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.services.FileServer;
+import org.apache.jmeter.testelement.TestElement;
 import org.apache.jorphan.logging.LoggingManager;
 import org.apache.jorphan.util.JMeterStopThreadException;
 import org.apache.log.Logger;
@@ -49,6 +54,9 @@ public class CustomSOAPSampler extends AbstractSampler {
     private static final String UPDATE_ATTACHMENT_REFS = "SOAPUpdateAttachmentReferences";
     public static final int ATTACHMENT_AS_RESPONSE_CONTENTTYPE = 0;
     public static final int ATTACHMENT_AS_RESPONSE_CONTENTID = 1;
+    private transient AuthManager authManager;
+    private transient CookieManager cookieManager;
+    private transient HeaderManager headerManager;
 
     public CustomSOAPSampler() {
     }
@@ -268,6 +276,7 @@ public class CustomSOAPSampler extends AbstractSampler {
                 SOAPConnectionFactory soapConnectionFactory2 = SOAPConnectionFactory.newInstance();
                 SOAPConnection connection3 = soapConnectionFactory2.createConnection();
                 URL endpoint3 = new URL(url);
+                addAdditionalHeaders(message, endpoint3);
                 SOAPMessage response2 = connection3.call(message, endpoint3);
                 result.sampleEnd();
                 if(log.isDebugEnabled()) {
@@ -536,6 +545,48 @@ public class CustomSOAPSampler extends AbstractSampler {
             log.error("Caught exception while updating attachments", var29);
             JOptionPane.showMessageDialog((Component)null, "Unable to update attachment references, see log file for details", "Error", 0);
             throw new JMeterStopThreadException("Unable to update attachment references");
+        }
+    }
+
+    protected void addAdditionalHeaders(SOAPMessage message, URL endpoint) {
+        MimeHeaders headers = message.getMimeHeaders();
+        if (headers == null) {
+            log.error("This should never happen: Mime Headers undefined!");
+            return;
+        }
+        if (authManager != null) {
+            String header = authManager.getAuthHeaderForURL(endpoint);
+            log.debug("Add auth header "+header);
+            headers.setHeader("Authorization", header);
+        }
+        if (cookieManager != null) {
+            String cookieHeader = cookieManager.getCookieHeaderForURL(endpoint);
+            if (cookieHeader != null) {
+                log.debug("Add cookies "+cookieHeader);
+                headers.setHeader("Cookie", cookieHeader);
+            }
+        }
+        if (headerManager != null) {
+            for (int i = 0; i < headerManager.size(); i++) {
+                Header header = headerManager.get(i);
+                if (header.getName().trim().length() != 0) {
+                    log.debug("Add header "+header);
+                    headers.setHeader(header.getName(), header.getValue());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void addTestElement(TestElement el) {
+        if (el instanceof AuthManager) {
+            authManager = (AuthManager)el;
+        } else if (el instanceof CookieManager) {
+            cookieManager = (CookieManager)el;
+        } else if (el instanceof HeaderManager) {
+            headerManager = (HeaderManager)el;
+        } else {
+            super.addTestElement(el);
         }
     }
 }
