@@ -555,13 +555,15 @@ public class CustomSOAPSampler extends AbstractSampler {
             return;
         }
         if (authManager != null) {
-            String header = authManager.getAuthHeaderForURL(endpoint);
-            log.debug("Add auth header "+header);
-            headers.setHeader("Authorization", header);
+            String authHeader = authManager.getAuthHeaderForURL(endpoint);
+            if (authHeader != null && authHeader.trim().length() != 0) {
+                log.debug("Add auth header "+authHeader);
+                headers.setHeader("Authorization", authHeader);
+            }
         }
         if (cookieManager != null) {
             String cookieHeader = cookieManager.getCookieHeaderForURL(endpoint);
-            if (cookieHeader != null) {
+            if (cookieHeader != null && cookieHeader.trim().length() != 0) {
                 log.debug("Add cookies "+cookieHeader);
                 headers.setHeader("Cookie", cookieHeader);
             }
@@ -569,7 +571,7 @@ public class CustomSOAPSampler extends AbstractSampler {
         if (headerManager != null) {
             for (int i = 0; i < headerManager.size(); i++) {
                 Header header = headerManager.get(i);
-                if (header.getName().trim().length() != 0) {
+                if (header != null && header.getName().trim().length() != 0) {
                     log.debug("Add header "+header);
                     headers.setHeader(header.getName(), header.getValue());
                 }
