@@ -47,6 +47,7 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
     private static final Logger log = LoggingManager.getLoggerForClass();
     private static final long serialVersionUID = 76805212533699529L;
     private UndoableJTextField urlField;
+    private UndoableJTextField mainContextId;
     private UndoableJTextArea soapXml;
     private JCheckBox useRelativePaths;
     private JCheckBox updateAttachmentReferences;
@@ -93,6 +94,7 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
         if(s instanceof CustomSOAPSampler) {
             CustomSOAPSampler sampler = (CustomSOAPSampler)s;
             sampler.setURLData(this.urlField.getText());
+            sampler.setMainContentId(this.mainContextId.getText());
             sampler.setXmlData(this.soapXml.getText());
             sampler.setSoapProtocolVersion((String)this.firstWithSoapProtocolVersion.getSelectedItem());
             sampler.setAttachments(this.soapTableModel.getAttachments());
@@ -109,6 +111,7 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
     public void clearGui() {
         super.clearGui();
         this.urlField.clear();
+        this.mainContextId.clear();
         this.soapXml.clear();
         this.treatAttachmentAsResponseCbx.setSelected(false);
         this.attachmentName.setText("");
@@ -125,6 +128,9 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
         this.urlField = new UndoableJTextField("120");
         this.urlField.initActionMap(this);
 
+        this.mainContextId = new UndoableJTextField(25);
+        this.mainContextId.initActionMap(this);
+
         GridBagConstraints c = new GridBagConstraints();
 
         this.firstWithSoapProtocolVersion = new JComboBox(soapProtocolVersions);
@@ -136,6 +142,12 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
         urlFieldPanel.add(urlFieldLabel, BorderLayout.WEST);
         urlFieldPanel.add(this.urlField, BorderLayout.CENTER);
 
+        JLabel mainContentIdFieldLabel = new JLabel(SOAPMessages.getResString("main_content_id"));
+        JPanel mainContentIdFieldPanel = new JPanel(new BorderLayout(5, 0));
+        mainContentIdFieldPanel.add(mainContentIdFieldLabel, BorderLayout.WEST);
+        mainContentIdFieldPanel.add(this.mainContextId, BorderLayout.CENTER);
+
+
         JPanel soapProtocolFieldPanel = new JPanel(new BorderLayout(5, 0));
         soapProtocolFieldPanel.add(new JLabel("Soap version"), BorderLayout.WEST);
         soapProtocolFieldPanel.add(this.firstWithSoapProtocolVersion, BorderLayout.EAST);
@@ -144,6 +156,8 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
 
         soapProtocolUrlJointPanel.add(urlFieldPanel, BorderLayout.CENTER);
         soapProtocolUrlJointPanel.add(soapProtocolFieldPanel, BorderLayout.LINE_END);
+        soapProtocolUrlJointPanel.add(mainContentIdFieldPanel, BorderLayout.SOUTH);
+
 
         this.soapXml = new UndoableJTextArea();
         //JTextArea ta = new JTextArea();
@@ -499,6 +513,7 @@ public class CustomSOAPSamplerGui extends AbstractSamplerGui {
         super.configure(el);
         CustomSOAPSampler sampler = (CustomSOAPSampler)el;
         this.urlField.switchDocument(this, sampler, sampler.getURLData());
+        this.mainContextId.switchDocument(this, sampler, sampler.getMainContentId());
         this.firstWithSoapProtocolVersion.setSelectedItem(sampler.getSoapProtocolVersion());
         this.soapXml.switchDocument(this, sampler, sampler.getXmlData());
         this.soapTableModel.clear();

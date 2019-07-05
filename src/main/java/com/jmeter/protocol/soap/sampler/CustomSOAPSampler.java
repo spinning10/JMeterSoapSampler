@@ -25,6 +25,10 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.jmeter.engine.util.CompoundVariable;
 import org.apache.jmeter.protocol.http.control.AuthManager;
 import org.apache.jmeter.protocol.http.control.CookieManager;
@@ -44,6 +48,7 @@ public class CustomSOAPSampler extends AbstractSampler {
     private static final Logger log = LoggingManager.getLoggerForClass();
     public static final String XML_DATA = "HTTPSamper.xml_data";
     public static final String URL_DATA = "SoapSampler.URL_DATA";
+    public static final String MAIN_CONTENT_ID = "SoapSampler.MAIN_CONTENT_ID";
     private static final String ATTACHMENT_COUNT = "SOAPAttachmentCount";
     private static final String ATTACHMENT_DATA = "SOAPAttachmentData";
     private static final String ATTACHMENT_AS_RESPONSE = "SOAPAttachmentAsResponse";
@@ -54,6 +59,7 @@ public class CustomSOAPSampler extends AbstractSampler {
     private static final String UPDATE_ATTACHMENT_REFS = "SOAPUpdateAttachmentReferences";
     public static final int ATTACHMENT_AS_RESPONSE_CONTENTTYPE = 0;
     public static final int ATTACHMENT_AS_RESPONSE_CONTENTID = 1;
+    public static final String CONTENT_TYPE = "Content-Type";
     private transient AuthManager authManager;
     private transient CookieManager cookieManager;
     private transient HeaderManager headerManager;
@@ -140,6 +146,14 @@ public class CustomSOAPSampler extends AbstractSampler {
         this.setProperty("SoapSampler.URL_DATA", url);
     }
 
+    public String getMainContentId() {
+        return this.getPropertyAsString(MAIN_CONTENT_ID);
+    }
+
+    public void setMainContentId(String contentId) {
+        this.setProperty(MAIN_CONTENT_ID, contentId);
+    }
+
     public void setSoapProtocolVersion(String protocolValue) {
         this.setProperty("SoapProtocolVersion", protocolValue);
     }
@@ -191,6 +205,16 @@ public class CustomSOAPSampler extends AbstractSampler {
             StreamSource ssrc = new StreamSource(sr);
             SOAPPart soapPart = message.getSOAPPart();
             soapPart.setContent(ssrc);
+
+            String mainContentId = getMainContentId();
+            if(StringUtils.isNotEmpty(mainContentId)){
+                soapPart.setContentId(mainContentId);
+                String[] mimeHeader = soapPart.getMimeHeader(CONTENT_TYPE);
+                ContentType contentType = ContentType.parse(mimeHeader[0]);
+                contentType = contentType.withParameters( new BasicNameValuePair("start", mainContentId));
+                soapPart.setMimeHeader(CONTENT_TYPE, contentType.toString());
+            }
+
             ArrayList attachments = this.getAttachments();
             Iterator it = attachments.iterator();
 
@@ -264,19 +288,28 @@ public class CustomSOAPSampler extends AbstractSampler {
                     this.updateAttachmentReferences(message);
                 }
 
+                URL endpoint3 = new URL(url);
                 ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+                addAdditionalHeaders(message, endpoint3);
                 message.writeTo(baos1);
                 baos1.close();
                 String fullRequest1 = url + "\n" + baos1.toString();
                 if(log.isDebugEnabled()) {
                     log.debug("Full request: \n" + fullRequest1);
                 }
+                if(StringUtils.isNotEmpty(mainContentId)){
+                    if( message.saveRequired())
+                        message.saveChanges();
+
+                    String[] mimeHeader = message.getMimeHeaders().getHeader(CONTENT_TYPE);
+                    ContentType contentType = ContentType.parse(mimeHeader[0]);
+                    contentType = contentType.withParameters( new BasicNameValuePair("start", mainContentId));
+                    message.getMimeHeaders().setHeader(CONTENT_TYPE, contentType.toString());
+                }
 
                 result.setSamplerData(fullRequest1);
                 SOAPConnectionFactory soapConnectionFactory2 = SOAPConnectionFactory.newInstance();
                 SOAPConnection connection3 = soapConnectionFactory2.createConnection();
-                URL endpoint3 = new URL(url);
-                addAdditionalHeaders(message, endpoint3);
                 SOAPMessage response2 = connection3.call(message, endpoint3);
                 result.sampleEnd();
                 if(log.isDebugEnabled()) {
